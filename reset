@@ -1,0 +1,20 @@
+#!/bin/sh
+# https://stackoverflow.com/questions/13716658/how-to-delete-all-commit-history-in-github
+
+# Checkout temporary branch
+git checkout --orphan temp_branch
+
+# Add all the files
+git add -A
+
+# Commit the changes
+git commit -am "Functional state"
+
+# Delete the branch
+git branch -D main
+
+# Rename the current branch
+git branch -m main
+
+# Finally, update repository
+git push -f --set-upstream origin main
