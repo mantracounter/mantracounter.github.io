@@ -1,0 +1,876 @@
+:root {
+  --bg: #0b0e12;
+  --surface: #141a20;
+  --panel: #1c232b;
+  --text: #d7dde5;
+  --muted: #8c939e;
+  --highlight: #f2f2f2;
+  --accent: #8f7442;
+  --danger: #7a3232;
+  --ok: #2e5f46;
+  --bg-opacity: 0.45;
+  --bg-blur: 3px;
+}
+
+/* Background image layer — sits between solid colour and app content */
+#bgLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: url("../src/background.jpg") center center / cover no-repeat;
+  opacity: var(--bg-opacity);
+  filter: blur(var(--bg-blur));
+  /* Counteract blur edge bleed by scaling slightly beyond viewport */
+  transform: scale(1.06);
+  pointer-events: none;
+  transition: opacity 400ms ease, filter 400ms ease;
+}
+
+#bgLayer.bg-hidden {
+  opacity: 0 !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: radial-gradient(circle at 20% 0%, #1a2129 0%, var(--bg) 48%);
+  color: var(--text);
+  font-family: "Segoe UI", "Noto Sans", sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.app {
+  width: min(860px, 100%);
+  display: grid;
+  gap: 1rem;
+}
+
+.top {
+  position: relative;
+  background: color-mix(in srgb, var(--surface) 85%, black);
+  border: 1px solid #2a323b;
+  border-radius: 16px;
+  padding: 1rem;
+  text-align: center;
+  transition: background 400ms ease, border-color 400ms ease;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.bg-active .top {
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+  border-color: rgba(255,255,255,0.07);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-size: clamp(1.4rem, 3.2vw, 2rem);
+  letter-spacing: 0.06em;
+}
+
+.status {
+  margin: 0;
+  color: var(--muted);
+}
+
+.counter-wrap,
+.milestone-wrap,
+.controls {
+  background: color-mix(in srgb, var(--surface) 88%, black);
+  border: 1px solid #2a323b;
+  border-radius: 16px;
+  padding: 1rem;
+  transition: background 400ms ease, border-color 400ms ease;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.bg-active .counter-wrap,
+body.bg-active .milestone-wrap,
+body.bg-active .controls {
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+  border-color: rgba(255,255,255,0.07);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.milestone-wrap {
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+
+.counter-wrap {
+  position: relative;
+  text-align: center;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.zero-hint {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.7rem;
+  font-size: 0.68rem;
+  color: #9aa2ad;
+  opacity: 0.55;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+}
+
+/* ── Manual correction overlays ─────────────────────────────────── */
+
+.correction-overlay {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(215, 221, 229, 0.55);
+  font-size: 1.1rem;
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.correction-overlay:active {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(215, 221, 229, 0.85);
+}
+
+#correctionLeft {
+  left: 16px;
+}
+
+#correctionRight {
+  right: 16px;
+}
+
+/* Hide correction overlays in pranayama mode */
+.mode-pranayama .correction-overlay {
+  display: none !important;
+}
+
+.counter {
+  font-size: clamp(4rem, 18vw, 9rem);
+  line-height: 1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 24px rgb(255 255 255 / 6%);
+  transition: color 220ms ease, text-shadow 220ms ease;
+}
+
+.counter.multiple {
+  color: var(--highlight);
+  text-shadow: 0 0 24px rgb(255 255 255 / 24%);
+}
+
+.counter-label {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+}
+
+/* ── Pranayama display ──────────────────────────────────────────────────────── */
+
+.prana-phase-name {
+  font-size: clamp(1rem, 4vw, 1.5rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+
+.prana-phase-trans {
+  font-size: 0.55em;
+  letter-spacing: 0.06em;
+  opacity: 0.65;
+  text-transform: lowercase;
+  font-weight: 400;
+}
+
+.prana-countdown {
+  font-size: clamp(4rem, 18vw, 9rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--highlight);
+  text-shadow: 0 0 28px rgb(255 255 255 / 20%);
+  transition: color 300ms ease;
+}
+
+.prana-ratio-strip {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+  letter-spacing: 0.04em;
+}
+
+.prana-ratio-strip .prana-phase-active {
+  color: var(--highlight);
+  font-weight: 700;
+}
+
+.prana-cycles-label {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: lowercase;
+  opacity: 0.7;
+}
+
+/* Ratio select in pranayama controls */
+.prana-ratio-select {
+  min-height: 42px;
+  padding: 0.3rem 1.8rem 0.3rem 0.6rem;
+  border-radius: 12px;
+  border: 1px solid #3a4550;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  width: 180px;
+  box-sizing: border-box;
+  text-align-last: center;
+}
+
+/* Mode-specific visibility */
+.mode-mantra  .prana-phase-name,
+.mode-mantra  .prana-countdown,
+.mode-mantra  .prana-ratio-strip,
+.mode-mantra  .prana-cycles-label,
+.mode-mantra  #pranaControls {
+  display: none;
+}
+
+.mode-pranayama #counterValue,
+.mode-pranayama .counter-label,
+.mode-pranayama #mantraControls,
+.mode-pranayama #milestoneStrip {
+  display: none !important;
+}
+
+.row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0.6rem 0;
+}
+
+.centered {
+  justify-content: center;
+}
+
+.row.two > * {
+  flex: 1;
+}
+
+.primary-controls {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.primary-controls button {
+  font-size: 1.05rem;
+  min-height: 48px;
+}
+
+.primary-controls button.full-width {
+  width: 100%;
+  font-size: 1.1rem;
+  min-height: 54px;
+  background: #c8d9eb;
+  border-color: #9ab5cf;
+  color: #0d1c28;
+  font-weight: 600;
+}
+
+.primary-controls button.full-width:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* Counting/active state */
+.primary-controls button.full-width.active {
+  background: #8fb3cf;
+  border-color: #6592b2;
+  color: #07111b;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: translateY(1px);
+  filter: none;
+}
+
+button,
+input,
+select {
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid #3a4550;
+  background: var(--panel);
+  color: var(--text);
+  padding: 0.55rem 0.75rem;
+}
+
+button {
+  cursor: pointer;
+  background: #2d3a46;
+  border-color: #3f4f5d;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Window-level action buttons (fixed to viewport corners) ───────── */
+
+.gear-btn,
+.share-btn {
+  position: fixed;
+  top: 0.6rem;
+  z-index: 100;
+  width: 29px;
+  height: 29px;
+  min-height: 29px;
+  padding: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 90%, black);
+  border: 1px solid #3a4550;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  transition: color 180ms ease, background 180ms ease;
+}
+
+.gear-btn {
+  left: 0.6rem;
+}
+
+.share-btn {
+  right: 0.6rem;
+}
+
+.gear-btn:hover,
+.share-btn:hover {
+  color: var(--text);
+  background: var(--panel);
+  filter: none;
+}
+
+.gear-btn .material-symbols-outlined,
+.share-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* ── Gear button (legacy — was inside .top header, kept for reference) ─ */
+/* The gear is now window-level; no .top-relative positioning needed. */
+
+/* ── Settings panel ───────────────────────────────────────────────── */
+
+.settings-panel {
+  position: fixed;
+  top: 0;
+  left: -340px;
+  width: 320px;
+  height: 100%;
+  z-index: 150;
+  background: color-mix(in srgb, var(--surface) 97%, black);
+  border-right: 1px solid #2a323b;
+  overflow-y: auto;
+  transition: left 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-panel.open {
+  left: 0;
+}
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms ease;
+}
+
+.settings-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1rem 0.5rem;
+  border-bottom: 1px solid #2a323b;
+}
+
+.settings-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.close-settings-btn {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.close-settings-btn:hover {
+  color: var(--text);
+  background: #2a323b;
+  filter: none;
+}
+
+.close-settings-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.settings-body {
+  padding: 0.75rem 0;
+  flex: 1;
+}
+
+.settings-section {
+  padding: 0.5rem 1rem 0.75rem;
+  border-bottom: 1px solid #1e272f;
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-section h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.settings-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+}
+
+.settings-row + .settings-row {
+  border-top: 1px solid #1e272f;
+}
+
+.settings-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.settings-label {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.settings-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.settings-input {
+  width: 80px;
+  min-height: 36px;
+  padding: 0.3rem 0.45rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.settings-select {
+  width: 100%;
+  min-height: 36px;
+  padding: 0.3rem 1.8rem 0.3rem 0.5rem;
+  margin-top: 0.3rem;
+  border-radius: 8px;
+  border: 1px solid #3a4550;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.settings-row--col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.1rem;
+}
+
+/* Noise-cancellation switch — neutral app colours */
+.nc-switch .switch-text {
+  color: var(--text);
+}
+
+.nc-switch input:checked + .slider {
+  background: #2d4a6a;
+  border-color: #5c8fbf;
+}
+
+.nc-switch input:not(:checked) + .slider {
+  background: #303b47;
+  border-color: #4a5865;
+}
+
+
+
+
+button.danger {
+  background: var(--danger);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle input {
+  min-height: auto;
+}
+
+.milestone-row {
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0;
+}
+
+.milestone-row label {
+  color: var(--muted);
+}
+
+#multipleN {
+  width: 84px;
+  text-align: center;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.slider {
+  position: relative;
+  width: 56px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid #4a5865;
+  background: #303b47;
+  transition: background 220ms ease, border-color 220ms ease;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #d6dde5;
+  transition: transform 220ms ease;
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(25px);
+}
+
+.mark-switch .switch-text {
+  color: #9fd9b8;
+}
+
+.mark-switch input:checked + .slider {
+  background: #2d6a4a;
+  border-color: #5ca57f;
+}
+
+.mark-switch input:not(:checked) + .slider {
+  background: #3b3340;
+  border-color: #6d5d78;
+}
+
+.bell-switch .switch-text {
+  color: #e0c48d;
+}
+
+.bell-switch input:checked + .slider {
+  background: #7a4d1f;
+  border-color: #d19a5e;
+}
+
+.bell-switch input:not(:checked) + .slider {
+  background: #424752;
+  border-color: #6b7482;
+}
+
+.switch-text {
+  min-width: 56px;
+}
+
+
+
+/* ── Milestone strip ──────────────────────────────────────────────────────── */
+
+.strip-ornament-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  /* Prevent the long ticker content from inflating the grid column */
+  min-width: 0;
+  overflow: hidden;
+}
+
+.milestone-strip {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0.15rem 0;
+  min-height: 1.6rem;  /* always occupy height even when empty */
+}
+
+.milestone-strip.hidden {
+  visibility: hidden;
+}
+
+.milestone-inner {
+  display: inline-block;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.ms-current {
+  color: var(--highlight);
+  font-weight: 600;
+}
+
+.ms-seam {
+  opacity: 0.4;
+}
+
+.ms-wrap {
+  opacity: 0.55;
+}
+
+/* ── Ornament / mode toggle ────────────────────────────────────────────────── */
+
+.ornament-btn {
+  display: flex;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  min-height: unset;
+  border-radius: 0;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.ornament-btn:hover {
+  opacity: 0.88;
+  transform: scale(1.03);
+  filter: none;
+}
+
+.ornament-btn:active {
+  transform: scale(0.97);
+}
+
+.mode-pranayama .ornament-btn {
+  filter: hue-rotate(30deg) brightness(1.15);
+}
+
+.mode-hint {
+  text-align: center;
+  font-size: 0.65rem;
+  color: #fff;
+  opacity: 0.75;
+  letter-spacing: 0.03em;
+  margin: 10px 0 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ornament {
+  width: min(480px, 90%);
+  height: auto;
+  /* Invert white→black, rotate blue-shifted gold back to warm gold,
+     then screen-blend so black areas vanish into the dark background. */
+  filter: invert(1) hue-rotate(180deg);
+  mix-blend-mode: screen;
+  opacity: 0.72;
+  pointer-events: none;
+  user-select: none;
+}
+
+
+progress {
+  width: 100%;
+  height: 10px;
+}
+
+.settings-hint--center {
+  text-align: center;
+}
+
+.install {
+  position: fixed;
+  inset: auto 1rem 1rem 1rem;
+  background: #11161d;
+  border: 1px solid #394551;
+  border-radius: 14px;
+  padding: 0.8rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.install.hidden {
+  display: none;
+}
+
+.install-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 560px) {
+  .install {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .param-item {
+    grid-template-columns: 1fr;
+  }
+
+  .param-item input[type="checkbox"] {
+    justify-self: start;
+  }
+}
+
+/* ── Responsive: narrow screens (phones portrait) ──────────────────── */
+@media (max-width: 480px) {
+  body {
+    padding: 0.5rem;
+  }
+
+  .app {
+    gap: 0.6rem;
+  }
+
+  .top,
+  .counter-wrap,
+  .controls,
+  .milestone-wrap {
+    padding: 0.75rem;
+  }
+
+  h1 {
+    font-size: clamp(1.1rem, 5vw, 1.5rem);
+  }
+
+  .milestone-row {
+    justify-content: center;
+    gap: 0.6rem;
+  }
+
+  #multipleN {
+    width: 68px;
+  }
+
+  /* Settings panel fills the screen on phones */
+  .settings-panel {
+    width: min(320px, 100vw);
+    left: min(-320px, -100vw);
+  }
+
+  .settings-panel.open {
+    left: 0;
+  }
+
+}
+
+/* ── Responsive: landscape phones ─────────────────────────────────── */
+@media (max-height: 520px) and (orientation: landscape) {
+  body {
+    justify-content: flex-start;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .app {
+    gap: 0.4rem;
+  }
+
+  .top,
+  .counter-wrap {
+    padding: 0.5rem 1rem;
+  }
+
+  .counter {
+    font-size: clamp(2.5rem, 14vh, 5rem);
+    line-height: 1;
+  }
+
+}

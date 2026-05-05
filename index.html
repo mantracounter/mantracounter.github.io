@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0e12" />
+
+    <title>True Heart Mantra Counter — Audio-Based Mantra &amp; Pranayama Counter</title>
+
+    <!-- Primary SEO -->
+    <meta name="title" content="True Heart Mantra Counter — Audio-Based Mantra &amp; Pranayama Counter" />
+    <meta name="description" content="A browser-based mantra repetition counter and pranayama timer that uses your microphone to detect sound bursts." />
+    <meta name="keywords" content="mantra counter, pranayama timer, meditation counter, breathing exercise, japa counter, audio mantra detection, progressive web app, offline meditation tool" />
+    <meta name="author" content="True Heart" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://mantracounter.github.io/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mantracounter.github.io/" />
+    <meta property="og:title" content="True Heart Mantra Counter" />
+    <meta property="og:description" content="A browser-based mantra repetition counter and pranayama timer that uses your microphone to detect sound bursts." />
+    <meta property="og:image" content="https://mantracounter.github.io/src/icon.png" />
+    <meta property="og:image:width" content="1024" />
+    <meta property="og:image:height" content="1024" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="True Heart Mantra Counter app icon" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="True Heart Mantra Counter" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="True Heart Mantra Counter" />
+    <meta name="twitter:description" content="A browser-based mantra repetition counter and pranayama timer that uses your microphone to detect sound bursts." />
+    <meta name="twitter:image" content="https://mantracounter.github.io/src/icon.png" />
+    <meta name="twitter:image:alt" content="True Heart Mantra Counter app icon" />
+
+    <!-- Favicon & PWA -->
+    <link rel="icon" type="image/png" sizes="1024x1024" href="src/icon.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="src/icon.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="src/icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="src/icon.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="src/icon.png" />
+    <link rel="apple-touch-icon" href="src/icon.png" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="src/styles.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+  </head>
+  <body>
+    <div id="bgLayer"></div>
+
+    <!-- Window-level action buttons (fixed to viewport corners) -->
+    <button id="gearBtn" class="gear-btn" aria-label="Open settings">
+      <span class="material-symbols-outlined">settings</span>
+    </button>
+    <button id="shareBtn" class="share-btn" aria-label="Share this app">
+      <span class="material-symbols-outlined">share</span>
+    </button>
+
+    <aside id="settingsPanel" class="settings-panel" aria-label="Settings">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <button id="closeSettingsBtn" class="close-settings-btn" aria-label="Close settings">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="settings-body">
+
+        <div class="settings-section">
+          <h3>Microphone</h3>
+          <div class="settings-row settings-row--col">
+            <label for="micSelect" class="settings-label">Input device</label>
+            <select id="micSelect" class="settings-select">
+              <option value="">Default</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Audio Processing</h3>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-label">Noise cancellation</span>
+              <span class="settings-hint">Uses RNNoise AI to remove background noise before detection.</span>
+            </div>
+            <label class="switch nc-switch">
+              <input id="noiseCancellation" type="checkbox" />
+              <span class="slider"></span>
+              <span id="ncSwitchText" class="switch-text">Off</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Mantra Detection</h3>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <label for="mantraGapMs" class="settings-label">Mantra gap (ms)</label>
+              <span class="settings-hint">Minimum silence between two separate mantras. Sounds closer together are merged into one repetition.</span>
+            </div>
+            <input id="mantraGapMs" type="number" class="settings-input" min="100" max="2000" step="50" value="550" />
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <label for="minSegmentMs" class="settings-label">Min mantra length (ms)</label>
+              <span class="settings-hint">Sounds shorter than this are ignored as noise or clicks.</span>
+            </div>
+            <input id="minSegmentMs" type="number" class="settings-input" min="50" max="500" step="10" value="150" />
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <label for="maxSegmentMs" class="settings-label">Max mantra length (s)</label>
+              <span class="settings-hint">A sound lasting longer than this is force-closed and counted. Prevents runaway segments from background noise.</span>
+            </div>
+            <input id="maxSegmentMs" type="number" class="settings-input" min="1" max="60" step="1" value="18" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Background Image</h3>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-label">Show background</span>
+            </div>
+            <label class="switch nc-switch">
+              <input id="bgEnabled" type="checkbox" checked />
+              <span class="slider"></span>
+              <span id="bgEnabledText" class="switch-text">On</span>
+            </label>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <label for="bgOpacity" class="settings-label">Darkness</label>
+              <span class="settings-hint">Lower = more transparent (brighter). Range 0–100.</span>
+            </div>
+            <input id="bgOpacity" type="number" class="settings-input" min="0" max="100" step="5" value="45" />
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <label for="bgBlur" class="settings-label">Blur (px)</label>
+              <span class="settings-hint">Gaussian blur applied to the background image.</span>
+            </div>
+            <input id="bgBlur" type="number" class="settings-input" min="0" max="20" step="1" value="3" />
+          </div>
+        </div>
+
+      </div>
+    </aside>
+    <div id="settingsOverlay" class="settings-overlay"></div>
+
+    <main class="app mode-mantra">
+      <header class="top">
+        <h1 id="appTitle">True Heart Mantra Counter</h1>
+        <p id="statusLine" class="status">Idle</p>
+      </header>
+
+      <section id="counterRegion" class="counter-wrap" aria-live="polite">
+        <div id="zeroHint" class="zero-hint" aria-hidden="true">Hold to zero</div>
+        <!-- Manual correction overlays (mantra mode only) -->
+        <div id="correctionLeft" class="correction-overlay" aria-hidden="true">−1</div>
+        <div id="correctionRight" class="correction-overlay" aria-hidden="true">+1</div>
+        <!-- Mantra mode -->
+        <div id="counterValue" class="counter">0</div>
+        <div class="counter-label">repetitions</div>
+        <!-- Pranayama mode (hidden by default) -->
+        <div id="pranaPhaseName" class="prana-phase-name" aria-hidden="true">PURAKA</div>
+        <div id="pranaCountdown" class="prana-countdown" aria-hidden="true">0</div>
+        <div id="pranaRatioStrip" class="prana-ratio-strip" aria-hidden="true"></div>
+        <div id="pranaCyclesLabel" class="prana-cycles-label" aria-hidden="true">Cycle 1</div>
+      </section>
+
+      <section class="controls primary-controls">
+        <button id="countBtn" class="full-width">Count Mantras</button>
+      </section>
+
+      <!-- Mantra controls -->
+      <section class="milestone-wrap" id="mantraControls">
+        <div class="row centered milestone-row">
+          <label for="multipleN">Mark multiples of</label>
+          <input id="multipleN" type="number" min="1" max="108" value="9" />
+          <label class="switch mark-switch">
+            <input id="markEnabled" type="checkbox" checked />
+            <span class="slider"></span>
+            <span id="markSwitchText" class="switch-text">On</span>
+          </label>
+          <label class="switch bell-switch">
+            <input id="bellEnabled" type="checkbox" checked />
+            <span class="slider"></span>
+            <span id="bellSwitchText" class="switch-text">Bell On</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Pranayama controls (hidden by default) -->
+      <section class="milestone-wrap" id="pranaControls">
+        <div class="row centered milestone-row">
+          <label for="pranaRatioSelect">Ratio</label>
+          <select id="pranaRatioSelect" class="prana-ratio-select"></select>
+          <label for="pranaMatraS">Matra&nbsp;(s)</label>
+          <input id="pranaMatraS" type="number" min="1" max="60" step="1" value="4" />
+          <label class="switch bell-switch">
+            <input id="pranaStageBell" type="checkbox" checked />
+            <span class="slider"></span>
+            <span id="pranaStageBellText" class="switch-text">Stage &#9836;</span>
+          </label>
+          <label class="switch bell-switch">
+            <input id="pranaMatraBell" type="checkbox" checked />
+            <span class="slider"></span>
+            <span id="pranaMatraBellText" class="switch-text">Tick &#9836;</span>
+          </label>
+        </div>
+      </section>
+
+      <div class="strip-ornament-group">
+        <div class="milestone-strip hidden" id="milestoneStrip">
+          <div class="milestone-inner" id="milestoneInner"></div>
+        </div>
+        <button id="modeToggleBtn" class="ornament-btn" aria-label="Toggle between mantra and pranayama modes">
+          <img src="src/ornament.png" alt="" class="ornament" aria-hidden="true" />
+        </button>
+        <p class="mode-hint" aria-hidden="true">Tap the ornament to switch between mantra and pranayama modes</p>
+      </div>
+
+
+    </main>
+
+    <aside id="installBanner" class="install hidden" role="dialog" aria-label="Install app">
+      <span>Install MantraCounter for a dedicated full-screen experience.</span>
+      <div class="install-actions">
+        <button id="installNowBtn">Install</button>
+        <button id="installLaterBtn" class="muted">Later</button>
+      </div>
+    </aside>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
